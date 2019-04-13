@@ -10,6 +10,7 @@ class App extends React.Component {
     super(props);
     this.paperContainer = React.createRef();
     this.layoutControls = React.createRef();
+    this.linkControlsTemplate = React.createRef();
   }
 
   //this.paperContainer.current,
@@ -164,9 +165,7 @@ class App extends React.Component {
       init: function() {
         var options = this.options;
         if (options.adjacencyList) {
-          options.cells = this.buildGraphFromAdjacencyList(
-            options.adjacencyList
-          );
+          options.cells = this.buildGraphFromAdjacencyList(options.adjacencyList);
         }
 
         this.listenTo(options.paper.model, "change", function(cell, opt) {
@@ -219,11 +218,7 @@ class App extends React.Component {
           elements.push(new Shape({ id: parentLabel }).setText(parentLabel));
           // Add links
           adjacencyList[parentLabel].forEach(function(childLabel) {
-            links.push(
-              new Link()
-                .connect(parentLabel, childLabel)
-                .setLabelText(parentLabel + "-" + childLabel)
-            );
+            links.push(new Link().connect(parentLabel, childLabel).setLabelText(parentLabel + "-" + childLabel));
           });
         });
 
@@ -322,9 +317,7 @@ class App extends React.Component {
 
         instance: null,
 
-        template: document
-          .getElementById("link-controls-template")
-          .content.querySelector(".controls")
+        template: this.linkControlsTemplate.current.content.querySelector(".controls")
       }
     );
     var controls = new LayoutControls({
@@ -364,47 +357,61 @@ class App extends React.Component {
 
   render() {
     return (
-      <div className="App">
-        <div
-          id="layout-controls"
-          className="controls"
-          ref={this.layoutControls}
-        >
-          <label for="ranker">Ranker:</label>
-          <select id="ranker">
-            <option value="network-simplex" selected>
-              network-simplex
-            </option>
-            <option value="tight-tree">tight-tree</option>
-            <option value="longest-path">longer-path</option>
-          </select>
-          <label for="rankdir">RankDir:</label>
-          <select id="rankdir">
-            <option value="TB" selected>
-              TB
-            </option>
-            <option value="BT">BT</option>
-            <option value="RL">RL</option>
-            <option value="LR">LR</option>
-          </select>
-          <label for="align">Align:</label>
-          <select id="align">
-            <option value="UL" selected>
-              UL
-            </option>
-            <option value="UR">UR</option>
-            <option value="DL">DL</option>
-            <option value="DR">DR</option>
-          </select>
-          <label for="ranksep">RankSep:</label>
-          <input id="ranksep" type="range" min="1" max="100" value="50" />
-          <label for="edgesep">EdgeSep:</label>
-          <input id="edgesep" type="range" min="1" max="100" value="50" />
-          <label for="nodesep">NodeSep:</label>
-          <input id="nodesep" type="range" min="1" max="100" value="50" />
+      <>
+        <template id="link-controls-template" ref={this.linkControlsTemplate}>
+          <div id="link-controls" class="controls">
+            <label for="labelpos">LabelPos:</label>
+            <select id="labelpos">
+              <option value="c">c</option>
+              <option value="r">r</option>
+              <option value="l">l</option>
+            </select>
+            <label for="minlen">MinLen:</label>
+            <input id="minlen" type="range" min="1" max="5" value="1" />
+            <label for="weight">Weight:</label>
+            <input id="weight" type="range" min="1" max="10" value="1" />
+            <label for="labeloffset">LabelOffset:</label>
+            <input id="labeloffset" type="range" min="1" max="10" value="10" />
+          </div>
+        </template>
+        <div className="App">
+          <div id="layout-controls" className="controls" ref={this.layoutControls}>
+            <label for="ranker">Ranker:</label>
+            <select id="ranker">
+              <option value="network-simplex" selected>
+                network-simplex
+              </option>
+              <option value="tight-tree">tight-tree</option>
+              <option value="longest-path">longer-path</option>
+            </select>
+            <label for="rankdir">RankDir:</label>
+            <select id="rankdir">
+              <option value="TB" selected>
+                TB
+              </option>
+              <option value="BT">BT</option>
+              <option value="RL">RL</option>
+              <option value="LR">LR</option>
+            </select>
+            <label for="align">Align:</label>
+            <select id="align">
+              <option value="UL" selected>
+                UL
+              </option>
+              <option value="UR">UR</option>
+              <option value="DL">DL</option>
+              <option value="DR">DR</option>
+            </select>
+            <label for="ranksep">RankSep:</label>
+            <input id="ranksep" type="range" min="1" max="100" value="50" />
+            <label for="edgesep">EdgeSep:</label>
+            <input id="edgesep" type="range" min="1" max="100" value="50" />
+            <label for="nodesep">NodeSep:</label>
+            <input id="nodesep" type="range" min="1" max="100" value="50" />
+          </div>
+          <div id="paper" className="paper" ref={this.paperContainer} />
         </div>
-        <div id="paper" className="paper" ref={this.paperContainer} />
-      </div>
+      </>
     );
   }
 }
