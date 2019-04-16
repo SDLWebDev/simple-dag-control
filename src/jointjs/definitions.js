@@ -9,20 +9,21 @@ export const DagNode = joint.dia.Element.define(
     },
     attrs: {
       body: {
-        refWidth: "100%",
-        refHeight: "100%",
+        ref: "label",
+        refWidth: "125%",
+        refHeight: "125%",
         fill: "ivory",
         stroke: "gray",
         strokeWidth: 2,
         rx: 10,
-        ry: 10
+        ry: 10,
+        yAlignment: "middle",
+        xAlignment: "middle"
       },
       label: {
-        refX: "50%",
-        refY: "50%",
-        yAlignment: "middle",
-        xAlignment: "middle",
-        fontSize: 30
+        fontSize: 20,
+        textAnchor: "middle",
+        textVerticalAnchor: "middle"
       }
     }
   },
@@ -56,13 +57,13 @@ export const DagEdge = joint.dia.Link.define(
         targetMarker: {
           type: "path",
           fill: "gray",
-          stroke: "none",
-          d: "M 10 -10 0 0 10 10 z"
+          stroke: "none"
+          //   d: "M 10 -10 0 0 10 10 z"
         }
       }
     },
     connector: {
-      name: "rounded"
+      name: "smooth"
     },
     z: -1,
     weight: 1,
