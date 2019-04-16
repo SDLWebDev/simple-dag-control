@@ -3,155 +3,16 @@ import ReactDOM from "react-dom";
 
 import "./styles.css";
 import joint from "jointjs/index";
-//import Shapes from "../jointjs-configuration/Shapes";
+import { DagNode, DagEdge } from "./jointjs/definitions";
 
 class App extends React.Component {
   constructor(props) {
     super(props);
     this.paperContainer = React.createRef();
     this.layoutControls = React.createRef();
-    this.linkControlsTemplate = React.createRef();
   }
 
-  //this.paperContainer.current,
-
   componentDidMount() {
-    var Shape = joint.dia.Element.define(
-      "demo.Shape",
-      {
-        size: {
-          width: 100,
-          height: 50
-        },
-        attrs: {
-          body: {
-            refWidth: "100%",
-            refHeight: "100%",
-            fill: "ivory",
-            stroke: "gray",
-            strokeWidth: 2,
-            rx: 10,
-            ry: 10
-          },
-          label: {
-            refX: "50%",
-            refY: "50%",
-            yAlignment: "middle",
-            xAlignment: "middle",
-            fontSize: 30
-          }
-        }
-      },
-      {
-        markup: [
-          {
-            tagName: "rect",
-            selector: "body"
-          },
-          {
-            tagName: "text",
-            selector: "label"
-          }
-        ],
-
-        setText: function(text) {
-          return this.attr("label/text", text || "");
-        }
-      }
-    );
-
-    var Link = joint.dia.Link.define(
-      "demo.Link",
-      {
-        attrs: {
-          line: {
-            connection: true,
-            stroke: "gray",
-            strokeWidth: 2,
-            pointerEvents: "none",
-            targetMarker: {
-              type: "path",
-              fill: "gray",
-              stroke: "none",
-              d: "M 10 -10 0 0 10 10 z"
-            }
-          }
-        },
-        connector: {
-          name: "rounded"
-        },
-        z: -1,
-        weight: 1,
-        minLen: 1,
-        labelPosition: "c",
-        labelOffset: 10,
-        labelSize: {
-          width: 50,
-          height: 30
-        },
-        labels: [
-          {
-            markup: [
-              {
-                tagName: "rect",
-                selector: "labelBody"
-              },
-              {
-                tagName: "text",
-                selector: "labelText"
-              }
-            ],
-            attrs: {
-              labelText: {
-                fill: "gray",
-                textAnchor: "middle",
-                refY: 5,
-                refY2: "-50%",
-                fontSize: 20,
-                cursor: "pointer"
-              },
-              labelBody: {
-                fill: "lightgray",
-                stroke: "gray",
-                strokeWidth: 2,
-                refWidth: "100%",
-                refHeight: "100%",
-                refX: "-50%",
-                refY: "-50%",
-                rx: 5,
-                ry: 5
-              }
-            },
-            size: {
-              width: 50,
-              height: 30
-            }
-          }
-        ]
-      },
-      {
-        markup: [
-          {
-            tagName: "path",
-            selector: "line",
-            attributes: {
-              fill: "none"
-            }
-          }
-        ],
-
-        connect: function(sourceId, targetId) {
-          return this.set({
-            source: { id: sourceId },
-            target: { id: targetId }
-          });
-        },
-
-        setLabelText: function(text) {
-          return this.prop("labels/0/attrs/labelText/text", text || "");
-        }
-      }
-    );
     var LayoutControls = joint.mvc.View.extend({
       events: {
         change: "layout",
@@ -188,9 +49,39 @@ class App extends React.Component {
           graph.resetCells(cells);
         }
 
+        var info = new joint.shapes.standard.Rectangle();
+        info.position(250, 70);
+        info.resize(100, 20);
+        info.attr({
+          body: {
+            visibility: "hidden",
+            cursor: "default",
+            fill: "white",
+            stoke: "black"
+          },
+          label: {
+            visibility: "hidden",
+            text: "Link clicked",
+            cursor: "default",
+            fill: "black",
+            fontSize: 12
+          }
+        });
+
+        info.addTo(graph);
+
         paper.fitToContent({
           padding: this.options.padding,
           allowNewOrigin: "any"
+        });
+
+        paper.on("cell:pointerdblclick", function(cellView) {
+          var isElement = cellView.model.isElement();
+          var message = (isElement ? "Element" : "Link") + " clicked";
+          info.attr("label/text", message);
+
+          info.attr("body/visibility", "visible");
+          info.attr("label/visibility", "visible");
         });
 
         this.trigger("layout");
@@ -215,10 +106,10 @@ class App extends React.Component {
 
         Object.keys(adjacencyList).forEach(function(parentLabel) {
           // Add element
-          elements.push(new Shape({ id: parentLabel }).setText(parentLabel));
+          elements.push(new DagNode({ id: parentLabel }).setText(parentLabel));
           // Add links
           adjacencyList[parentLabel].forEach(function(childLabel) {
-            links.push(new Link().connect(parentLabel, childLabel).setLabelText(parentLabel + "-" + childLabel));
+            links.push(new DagEdge().connect(parentLabel, childLabel).setLabelText(parentLabel + "-" + childLabel));
           });
         });
 
@@ -229,111 +120,16 @@ class App extends React.Component {
       }
     });
 
-    var LinkControls = joint.mvc.View.extend(
-      {
-        highlighter: {
-          name: "stroke",
-          options: {
-            attrs: {
-              stroke: "lightcoral",
-              "stroke-width": 4
-            }
-          }
-        },
-
-        events: {
-          change: "updateLink",
-          input: "updateLink"
-        },
-
-        init: function() {
-          this.highlight();
-          this.updateControls();
-        },
-
-        updateLink: function() {
-          this.options.cellView.model.set(this.getModelAttributes(), {
-            layout: true
-          });
-        },
-
-        updateControls: function() {
-          var link = this.options.cellView.model;
-
-          this.$("#labelpos").val(link.get("labelPosition"));
-          this.$("#labeloffset").val(link.get("labelOffset"));
-          this.$("#minlen").val(link.get("minLen"));
-          this.$("#weight").val(link.get("weight"));
-        },
-
-        getModelAttributes: function() {
-          return {
-            minLen: parseInt(this.$("#minlen").val(), 10),
-            weight: parseInt(this.$("#weight").val(), 10),
-            labelPosition: this.$("#labelpos").val(),
-            labelOffset: parseInt(this.$("#labeloffset").val(), 10)
-          };
-        },
-
-        onRemove: function() {
-          this.unhighlight();
-        },
-
-        highlight: function() {
-          this.options.cellView.highlight("rect", {
-            highlighter: this.highlighter
-          });
-        },
-
-        unhighlight: function() {
-          this.options.cellView.unhighlight("rect", {
-            highlighter: this.highlighter
-          });
-        }
-      },
-      {
-        create: function(linkView) {
-          this.remove();
-          this.instance = new this({
-            el: this.template.cloneNode(true),
-            cellView: linkView
-          });
-          this.instance.$el.insertAfter("#layout-controls");
-        },
-
-        remove: function() {
-          if (this.instance) {
-            this.instance.remove();
-            this.instance = null;
-          }
-        },
-
-        refresh: function() {
-          if (this.instance) {
-            this.instance.unhighlight();
-            this.instance.highlight();
-          }
-        },
-
-        instance: null,
-
-        template: this.linkControlsTemplate.current.content.querySelector(".controls")
+    var paper = new joint.dia.Paper({
+      el: this.paperContainer.current,
+      interactive: function(cellView) {
+        return cellView.model.isElement();
       }
-    );
+    });
+
     var controls = new LayoutControls({
       el: this.layoutControls.current,
-      paper: new joint.dia.Paper({
-        el: this.paperContainer.current,
-        interactive: function(cellView) {
-          return cellView.model.isElement();
-        }
-      }).on(
-        {
-          "link:pointerdown": LinkControls.create,
-          "blank:pointerdown element:pointerdown": LinkControls.remove
-        },
-        LinkControls
-      ),
+      paper: paper,
       adjacencyList: {
         a: ["b", "c", "d"],
         b: ["d", "e"],
@@ -345,12 +141,7 @@ class App extends React.Component {
         h: ["f"],
         i: ["f", "h"]
       }
-    }).on(
-      {
-        layout: LinkControls.refresh
-      },
-      LinkControls
-    );
+    });
 
     controls.layout();
   }
@@ -358,22 +149,6 @@ class App extends React.Component {
   render() {
     return (
       <>
-        <template id="link-controls-template" ref={this.linkControlsTemplate}>
-          <div id="link-controls" class="controls">
-            <label for="labelpos">LabelPos:</label>
-            <select id="labelpos">
-              <option value="c">c</option>
-              <option value="r">r</option>
-              <option value="l">l</option>
-            </select>
-            <label for="minlen">MinLen:</label>
-            <input id="minlen" type="range" min="1" max="5" value="1" />
-            <label for="weight">Weight:</label>
-            <input id="weight" type="range" min="1" max="10" value="1" />
-            <label for="labeloffset">LabelOffset:</label>
-            <input id="labeloffset" type="range" min="1" max="10" value="10" />
-          </div>
-        </template>
         <div className="App">
           <div id="layout-controls" className="controls" ref={this.layoutControls}>
             <label for="ranker">Ranker:</label>
