@@ -35,6 +35,7 @@ class App extends React.Component {
       ranker: "tight-tree",
       rankDir: "TB",
       align: "UL",
+      weight: 100,
       rankSep: 50,
       edgeSep: 50,
       nodeSep: 50
@@ -58,7 +59,7 @@ class App extends React.Component {
   };
 
   componentDidMount() {
-    var nodes = [{ id: "1", title: "node 1" }, { id: "2", title: "node node node 2" }, { id: "3", title: "node 3" }, { id: "4", title: "node 4" }, { id: "5", title: "node 5" }];
+    var nodes = [{ id: "1", title: "node 1" }, { id: "2", title: "long node node node 2" }, { id: "3", title: "node 3" }, { id: "4", title: "node 4" }, { id: "5", title: "node 5" }];
     var edges = [
       { from: "1", to: "3", weight: "33%" },
       { from: "2", to: "4", weight: "100%" },

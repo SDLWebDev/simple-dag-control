@@ -57,23 +57,20 @@ export const DagEdge = joint.dia.Link.define(
         targetMarker: {
           type: "path",
           fill: "gray",
-          stroke: "none"
-          //   d: "M 10 -10 0 0 10 10 z"
+          stroke: "none",
+          d: "M 10 -10 0 0 10 10 z"
         }
       }
     },
+    router: {
+      name: "normal"
+    },
     connector: {
-      name: "smooth"
+      name: "rounded"
     },
     z: -1,
-    weight: 1,
-    minLen: 1,
-    labelPosition: "c",
-    labelOffset: 10,
-    labelSize: {
-      width: 50,
-      height: 30
-    },
+    weight: 0,
+    minLen: 0,
     labels: [
       {
         markup: [
@@ -86,30 +83,28 @@ export const DagEdge = joint.dia.Link.define(
             selector: "labelText"
           }
         ],
+        size: {
+          width: 100,
+          height: 50
+        },
         attrs: {
           labelText: {
             fill: "gray",
             textAnchor: "middle",
-            refY: 5,
-            refY2: "-50%",
-            fontSize: 20,
+            textVerticalAnchor: "middle",
+            fontSize: 15,
             cursor: "pointer"
           },
           labelBody: {
+            ref: "labelText",
             fill: "lightgray",
             stroke: "gray",
-            strokeWidth: 2,
-            refWidth: "100%",
-            refHeight: "100%",
-            refX: "-50%",
-            refY: "-50%",
-            rx: 5,
-            ry: 5
+            strokeWidth: 1,
+            refWidth: "150%",
+            refHeight: "150%",
+            yAlignment: "middle",
+            xAlignment: "middle"
           }
-        },
-        size: {
-          width: 50,
-          height: 30
         }
       }
     ]
