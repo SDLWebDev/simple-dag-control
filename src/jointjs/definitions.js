@@ -1,43 +1,46 @@
 import joint from "jointjs/index";
 
-export const DagNode = joint.dia.Element.define(
+export const DagNode = joint.shapes.standard.Rectangle.define(
   "dag.Node",
   {
     size: {
-      width: 100,
+      width: 150,
       height: 50
     },
     attrs: {
       body: {
-        ref: "label",
-        refWidth: "125%",
-        refHeight: "125%",
+        //ref: "label",
+        refX: 0,
+        refY: 0,
+        // refWidth: "125%",
+        // refHeight: "125%",
         fill: "ivory",
         stroke: "gray",
         strokeWidth: 2,
+        //rounded corners
         rx: 10,
-        ry: 10,
-        yAlignment: "middle",
-        xAlignment: "middle"
+        ry: 10
       },
       label: {
-        fontSize: 20,
+        ref: "body",
+        textVerticalAnchor: "middle",
         textAnchor: "middle",
-        textVerticalAnchor: "middle"
+        fontSize: 20,
+        fill: "#333333"
       }
     }
   },
   {
-    markup: [
-      {
-        tagName: "rect",
-        selector: "body"
-      },
-      {
-        tagName: "text",
-        selector: "label"
-      }
-    ],
+    // markup: [
+    //   {
+    //     tagName: "rect",
+    //     selector: "body"
+    //   },
+    //   {
+    //     tagName: "text",
+    //     selector: "label"
+    //   }
+    // ],
 
     setText: function(text) {
       return this.attr("label/text", text || "");
@@ -63,7 +66,7 @@ export const DagEdge = joint.dia.Link.define(
       }
     },
     router: {
-      name: "normal"
+      name: "manhattan"
     },
     connector: {
       name: "rounded"

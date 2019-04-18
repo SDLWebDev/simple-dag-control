@@ -6,6 +6,8 @@
   "main": "src/index.js",
   "dependencies": {
     "backbone": "1.4.0",
+    "dagre": "^0.8.4",
+    "graphlib": "^2.1.7",
     "jointjs": "2.2.1",
     "jquery": "3.4.0",
     "lodash": "4.17.11",
