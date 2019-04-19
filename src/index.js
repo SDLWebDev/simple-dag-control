@@ -3,8 +3,12 @@ import ReactDOM from "react-dom";
 
 import "./styles.css";
 import joint from "jointjs/index";
+import g from "jointjs/index";
 import { DagNode, DagEdge } from "./jointjs/definitions";
+import _ from "lodash";
 
+const LINK_STROKE_WIDTH = 1;
+const LINK_HIGHLIGHTED_STROKE_WIDTH = 2;
 class App extends React.Component {
   constructor(props) {
     super(props);
@@ -15,44 +19,6 @@ class App extends React.Component {
     var elements = nodes.map(n => new DagNode({ id: n.id }).setText(n.title));
     // var links = edges.map(e => new DagEdge().connect(e.from, e.to).setLabelText(e.weight));
 
-    // var elements = nodes.map(n =>
-    //   new joint.shapes.standard.Rectangle(
-    //     { id: n.id },
-    //     {
-    //       attr: {
-    //         body: {
-    //           fill: {
-    //             type: "linearGradient",
-    //             stops: [{ offset: "0%", color: "#f7a07b" }, { offset: "100%", color: "#fe8550" }],
-    //             attrs: { x1: "0%", y1: "0%", x2: "0%", y2: "100%" }
-    //           },
-    //           stroke: "#ed8661",
-    //           strokeWidth: 2
-    //         },
-    //         label: {
-    //           text: n.title,
-    //           fill: "#f0f0f0",
-    //           fontSize: 18,
-    //           fontWeight: "lighter",
-    //           fontVariant: "small-caps"
-    //         }
-    //       }
-    //     },
-    //     {
-    //       markup: [
-    //         {
-    //           tagName: "rect",
-    //           selector: "body"
-    //         },
-    //         {
-    //           tagName: "text",
-    //           selector: "label"
-    //         }
-    //       ]
-    //     }
-    //   ).resize(300, 100)
-    // );
-
     var links = edges.map(e =>
       new joint.shapes.standard.Link({
         source: { id: e.from },
@@ -60,18 +26,17 @@ class App extends React.Component {
         connector: { name: "rounded" },
         attrs: {
           line: {
-            stroke: "#333333",
-            strokeWidth: 3
+            stroke: "black",
+            strokeWidth: LINK_STROKE_WIDTH
           }
         }
-      }).router("manhattan", {
+      }).router("normal", {
         // excludeEnds: ['source'],
         // excludeTypes: ['myNamespace.MyCommentElement'],
         startDirections: ["bottom"],
         endDirections: ["top"]
       })
     );
-
     return elements.concat(links);
   };
 
@@ -101,10 +66,18 @@ class App extends React.Component {
       graph.resetCells(cells);
     }
 
-    // graph.on("change:position", function(cell) {
-    //   // has an obstacle been moved? Then reroute the link.
-    //   if (obstacles.indexOf(cell) > -1) paper.findViewByModel(link).update();
-    // });
+    graph.on("change:position", function(cell) {
+      var allCells = graph.getCells();
+
+      // has an obstacle been moved? Then reroute the link.
+      if (allCells.indexOf(cell) > -1) {
+        console.log("updating...");
+
+        allCells.forEach(link => {
+          paper.findViewByModel(link).update();
+        });
+      }
+    });
 
     paper.fitToContent({
       padding: 50,
@@ -115,10 +88,100 @@ class App extends React.Component {
       var isElement = cellView.model.isElement();
       console.log(cellView.model.id);
     });
+
+    paper.on("blank:pointerclick", function(cellView) {
+      var links = graph.getLinks();
+
+      links.forEach(l => {
+        var linkView = l.findView(paper);
+        linkView.model.attr("line/stroke", "black");
+        linkView.model.attr("line/strokeWidth", LINK_STROKE_WIDTH);
+        linkView.model.toBack();
+        linkView.removeTools();
+      });
+    });
+
+    /// link tools //////////////////////////////////////////////////////////////////////////////
+
+    paper.on("link:mouseenter", function(linkView) {
+      linkView.showTools();
+    });
+
+    paper.on("link:mouseleave", function(linkView) {
+      //if (!linkView.hasTools("onhover")) return;
+      //
+    });
+
+    paper.on("link:pointerdown", function(linkView) {
+      var links = graph.getLinks();
+
+      links.forEach(l => {
+        var linkView = l.findView(paper);
+        linkView.model.attr("line/stroke", "black");
+        linkView.model.attr("line/strokeWidth", LINK_STROKE_WIDTH);
+        linkView.model.toBack();
+        linkView.removeTools();
+      });
+
+      linkView.model.attr("line/stroke", "red");
+      linkView.model.attr("line/strokeWidth", LINK_HIGHLIGHTED_STROKE_WIDTH);
+      linkView.model.toFront();
+
+      // tools
+      var verticesTool = new joint.linkTools.Vertices({
+        vertexAdding: false
+      });
+      var segmentsTool = new joint.linkTools.Segments();
+      var sourceArrowheadTool = new joint.linkTools.SourceArrowhead();
+      var targetArrowheadTool = new joint.linkTools.TargetArrowhead();
+      var sourceAnchorTool = new joint.linkTools.SourceAnchor({
+        focusOpacity: 0.5,
+        redundancyRemoval: false,
+        restrictArea: false,
+        snapRadius: 20
+      });
+      var targetAnchorTool = new joint.linkTools.TargetAnchor({
+        focusOpacity: 0.5,
+        redundancyRemoval: false,
+        restrictArea: false,
+        snapRadius: 20
+      });
+      var boundaryTool = new joint.linkTools.Boundary();
+      var removeButton = new joint.linkTools.Remove({
+        focusOpacity: 0.5,
+        rotate: false,
+        distance: 0,
+        offset: 15
+      });
+
+      linkView.addTools(
+        new joint.dia.ToolsView({
+          tools: [
+            //
+            verticesTool,
+            //segmentsTool,
+            //sourceArrowheadTool,
+            targetArrowheadTool,
+            // sourceAnchorTool,
+            // targetAnchorTool,
+            //boundaryTool,
+            removeButton
+          ]
+        })
+      );
+    });
+    //////////////////////////////////////////////////////////////////////////////////////////
   };
 
   componentDidMount() {
-    var nodes = [{ id: "1", title: "node 1" }, { id: "2", title: "long node node node 2" }, { id: "3", title: "node 3" }, { id: "4", title: "node 4" }, { id: "5", title: "node 5" }];
+    var nodes = [
+      //
+      { id: "1", title: "node 1" },
+      { id: "2", title: "long nody node node node really really long node let's see what happens" },
+      { id: "3", title: "node 3" },
+      { id: "4", title: "node 4" },
+      { id: "5", title: "node 5" }
+    ];
     var edges = [
       { from: "1", to: "3", weight: "33%" },
       { from: "2", to: "4", weight: "100%" },

@@ -1,6 +1,6 @@
 import joint from "jointjs/index";
 
-export const DagNode = joint.shapes.standard.Rectangle.define(
+export const DagNode = joint.dia.Element.define(
   "dag.Node",
   {
     size: {
@@ -9,41 +9,70 @@ export const DagNode = joint.shapes.standard.Rectangle.define(
     },
     attrs: {
       body: {
-        //ref: "label",
-        refX: 0,
-        refY: 0,
-        // refWidth: "125%",
-        // refHeight: "125%",
-        fill: "ivory",
-        stroke: "gray",
+        refWidth: "100%",
+        refHeight: "100%",
         strokeWidth: 2,
-        //rounded corners
+        stroke: "#000000",
+        fill: "#FFFFFF",
         rx: 10,
         ry: 10
       },
       label: {
-        ref: "body",
+        fontSize: 15,
+        refX: "50%",
+        refY: "50%",
         textVerticalAnchor: "middle",
         textAnchor: "middle",
-        fontSize: 20,
-        fill: "#333333"
+        textWrap: {
+          text: "",
+          width: -25, // reference width minus 10
+          height: "80%", // half of the reference height
+          ellipsis: true // could also be a custom string, e.g. '...!?'
+        }
       }
+
+      // body: {
+      //   //ref: "label",
+      //   refX: 0,
+      //   refY: 0,
+      //   // refWidth: "125%",
+      //   // refHeight: "125%",
+      //   fill: "ivory",
+      //   stroke: "gray",
+      //   strokeWidth: 2,
+      //   //rounded corners
+      //   rx: 10,
+      //   ry: 10
+      // },
+      // textWrap: {
+      //   text: "lorem ipsum dolor sit amet consectetur adipiscing elit",
+      //   width: -10, // reference width minus 10
+      //   height: "50%", // half of the reference height
+      //   ellipsis: true // could also be a custom string, e.g. '...!?'
+      // }
+      // textWrap: {
+      //   ref: "body",
+      //   textVerticalAnchor: "middle",
+      //   textAnchor: "middle",
+      //   fontSize: 20,
+      //   fill: "#333333"
+      // }
     }
   },
   {
-    // markup: [
-    //   {
-    //     tagName: "rect",
-    //     selector: "body"
-    //   },
-    //   {
-    //     tagName: "text",
-    //     selector: "label"
-    //   }
-    // ],
+    markup: [
+      {
+        tagName: "rect",
+        selector: "body"
+      },
+      {
+        tagName: "text",
+        selector: "label"
+      }
+    ],
 
     setText: function(text) {
-      return this.attr("label/text", text || "");
+      return this.attr("label/textWrap/text", text || "");
     }
   }
 );
