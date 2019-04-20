@@ -7,6 +7,7 @@ export const DagNode = joint.dia.Element.define(
       width: 150,
       height: 50
     },
+
     attrs: {
       body: {
         refWidth: "100%",
@@ -30,33 +31,6 @@ export const DagNode = joint.dia.Element.define(
           ellipsis: true // could also be a custom string, e.g. '...!?'
         }
       }
-
-      // body: {
-      //   //ref: "label",
-      //   refX: 0,
-      //   refY: 0,
-      //   // refWidth: "125%",
-      //   // refHeight: "125%",
-      //   fill: "ivory",
-      //   stroke: "gray",
-      //   strokeWidth: 2,
-      //   //rounded corners
-      //   rx: 10,
-      //   ry: 10
-      // },
-      // textWrap: {
-      //   text: "lorem ipsum dolor sit amet consectetur adipiscing elit",
-      //   width: -10, // reference width minus 10
-      //   height: "50%", // half of the reference height
-      //   ellipsis: true // could also be a custom string, e.g. '...!?'
-      // }
-      // textWrap: {
-      //   ref: "body",
-      //   textVerticalAnchor: "middle",
-      //   textAnchor: "middle",
-      //   fontSize: 20,
-      //   fill: "#333333"
-      // }
     }
   },
   {
@@ -76,6 +50,35 @@ export const DagNode = joint.dia.Element.define(
     }
   }
 );
+
+export const DagOutPort = new joint.shapes.devs.Model({
+  position: { x: 50, y: 50 },
+  size: { width: 90, height: 90 },
+  inPorts: ["in1", "in2"],
+  outPorts: ["out"],
+  ports: {
+    groups: {
+      in: {
+        attrs: {
+          ".port-body": {
+            fill: "#16A085"
+          }
+        }
+      },
+      out: {
+        attrs: {
+          ".port-body": {
+            fill: "#E74C3C"
+          }
+        }
+      }
+    }
+  },
+  attrs: {
+    ".label": { text: "Model", "ref-x": 0.5, "ref-y": 0.2 },
+    rect: { fill: "#2ECC71" }
+  }
+});
 
 export const DagEdge = joint.dia.Link.define(
   "dag.Edge",

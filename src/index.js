@@ -12,12 +12,13 @@ const LINK_HIGHLIGHTED_STROKE_WIDTH = 2;
 class App extends React.Component {
   constructor(props) {
     super(props);
+
     this.paperContainer = React.createRef();
   }
 
-  buildGraph = (nodes, edges) => {
-    var elements = nodes.map(n => new DagNode({ id: n.id }).setText(n.title));
-    // var links = edges.map(e => new DagEdge().connect(e.from, e.to).setLabelText(e.weight));
+  buildDag = (nodes, edges) => {
+    //var elements = nodes.map(n => new DagNode({ id: n.id }).setText(n.title));
+    var elements = nodes.map(n => new DagOutPort({ id: n.id }));
 
     var links = edges.map(e =>
       new joint.shapes.standard.Link({
@@ -30,9 +31,7 @@ class App extends React.Component {
             strokeWidth: LINK_STROKE_WIDTH
           }
         }
-      }).router("normal", {
-        // excludeEnds: ['source'],
-        // excludeTypes: ['myNamespace.MyCommentElement'],
+      }).router("metro", {
         startDirections: ["bottom"],
         endDirections: ["top"]
       })
@@ -40,18 +39,19 @@ class App extends React.Component {
     return elements.concat(links);
   };
 
-  layout = cells => {
-    var graph = new joint.dia.Graph();
+  layout = dag => {
+    var self = this;
 
     var paper = new joint.dia.Paper({
       el: this.paperContainer.current,
       width: 1000,
       height: 600,
       gridSize: 10,
-      model: graph
+      model: new joint.dia.Graph(),
+      linkPinning: false
     });
 
-    var graphBBox = joint.layout.DirectedGraph.layout(cells, {
+    joint.layout.DirectedGraph.layout(dag, {
       ranker: "tight-tree",
       rankDir: "TB",
       align: "UL",
@@ -60,14 +60,26 @@ class App extends React.Component {
       nodeSep: 100
     });
 
-    if (graph.getCells().length === 0) {
-      // The graph could be empty at the beginning to avoid cells rendering
-      // and their subsequent update when elements are translated
-      graph.resetCells(cells);
+    // The graph could be empty at the beginning to avoid cells rendering
+    // and their subsequent update when elements are translated
+    if (paper.model.getCells().length === 0) {
+      paper.model.resetCells(dag);
     }
 
-    graph.on("change:position", function(cell) {
-      var allCells = graph.getCells();
+    paper.fitToContent({
+      padding: 10,
+      allowNewOrigin: "any"
+    });
+
+    // TODO - panning
+    // paper.on("blank:pointerdown", function(cellView) {
+    //   self.clearLinkSelection(paper);
+    // });
+
+    /// Events //////////////////////////////////////////////////////////////////////////////
+
+    paper.model.on("change:position", function(cell) {
+      var allCells = paper.model.getCells();
 
       // has an obstacle been moved? Then reroute the link.
       if (allCells.indexOf(cell) > -1) {
@@ -79,9 +91,8 @@ class App extends React.Component {
       }
     });
 
-    paper.fitToContent({
-      padding: 50,
-      allowNewOrigin: "any"
+    paper.on("blank:pointerdblclick", function(cellView) {
+      self.clearLinkSelection(paper);
     });
 
     paper.on("cell:pointerdblclick", function(cellView) {
@@ -89,92 +100,84 @@ class App extends React.Component {
       console.log(cellView.model.id);
     });
 
-    paper.on("blank:pointerclick", function(cellView) {
-      var links = graph.getLinks();
-
-      links.forEach(l => {
-        var linkView = l.findView(paper);
-        linkView.model.attr("line/stroke", "black");
-        linkView.model.attr("line/strokeWidth", LINK_STROKE_WIDTH);
-        linkView.model.toBack();
-        linkView.removeTools();
-      });
-    });
-
-    /// link tools //////////////////////////////////////////////////////////////////////////////
-
     paper.on("link:mouseenter", function(linkView) {
       linkView.showTools();
     });
 
-    paper.on("link:mouseleave", function(linkView) {
-      //if (!linkView.hasTools("onhover")) return;
-      //
-    });
+    paper.on("link:mouseleave", function(linkView) {});
 
     paper.on("link:pointerdown", function(linkView) {
-      var links = graph.getLinks();
-
-      links.forEach(l => {
-        var linkView = l.findView(paper);
-        linkView.model.attr("line/stroke", "black");
-        linkView.model.attr("line/strokeWidth", LINK_STROKE_WIDTH);
-        linkView.model.toBack();
-        linkView.removeTools();
-      });
-
-      linkView.model.attr("line/stroke", "red");
-      linkView.model.attr("line/strokeWidth", LINK_HIGHLIGHTED_STROKE_WIDTH);
-      linkView.model.toFront();
-
-      // tools
-      var verticesTool = new joint.linkTools.Vertices({
-        vertexAdding: false
-      });
-      var segmentsTool = new joint.linkTools.Segments();
-      var sourceArrowheadTool = new joint.linkTools.SourceArrowhead();
-      var targetArrowheadTool = new joint.linkTools.TargetArrowhead();
-      var sourceAnchorTool = new joint.linkTools.SourceAnchor({
-        focusOpacity: 0.5,
-        redundancyRemoval: false,
-        restrictArea: false,
-        snapRadius: 20
-      });
-      var targetAnchorTool = new joint.linkTools.TargetAnchor({
-        focusOpacity: 0.5,
-        redundancyRemoval: false,
-        restrictArea: false,
-        snapRadius: 20
-      });
-      var boundaryTool = new joint.linkTools.Boundary();
-      var removeButton = new joint.linkTools.Remove({
-        focusOpacity: 0.5,
-        rotate: false,
-        distance: 0,
-        offset: 15
-      });
-
-      linkView.addTools(
-        new joint.dia.ToolsView({
-          tools: [
-            //
-            verticesTool,
-            //segmentsTool,
-            //sourceArrowheadTool,
-            targetArrowheadTool,
-            // sourceAnchorTool,
-            // targetAnchorTool,
-            //boundaryTool,
-            removeButton
-          ]
-        })
-      );
+      self.clearLinkSelection(paper);
+      self.selectLink(linkView, paper);
+      linkView.startArrowheadMove("target");
     });
     //////////////////////////////////////////////////////////////////////////////////////////
   };
 
+  clearLinkSelection = paper => {
+    var links = paper.model.getLinks();
+
+    links.forEach(l => {
+      var linkView = l.findView(paper);
+      linkView.model.attr("line/stroke", "black");
+      linkView.model.attr("line/strokeWidth", LINK_STROKE_WIDTH);
+      linkView.model.toBack();
+      linkView.removeTools();
+    });
+  };
+
+  selectLink = linkView => {
+    linkView.model.attr("line/stroke", "red");
+    linkView.model.attr("line/strokeWidth", LINK_HIGHLIGHTED_STROKE_WIDTH);
+    linkView.model.toFront();
+
+    // tools
+    var verticesTool = new joint.linkTools.Vertices({
+      vertexAdding: false
+    });
+    var segmentsTool = new joint.linkTools.Segments();
+    var sourceArrowheadTool = new joint.linkTools.SourceArrowhead();
+    var targetArrowheadTool = new joint.linkTools.TargetArrowhead();
+    var sourceAnchorTool = new joint.linkTools.SourceAnchor({
+      focusOpacity: 0.5,
+      redundancyRemoval: false,
+      restrictArea: false,
+      snapRadius: 20
+    });
+    var targetAnchorTool = new joint.linkTools.TargetAnchor({
+      focusOpacity: 0.5,
+      redundancyRemoval: false,
+      restrictArea: false,
+      snapRadius: 20
+    });
+    var boundaryTool = new joint.linkTools.Boundary();
+    var removeButton = new joint.linkTools.Remove({
+      focusOpacity: 0.5,
+      rotate: false,
+      distance: 0,
+      offset: 0
+    });
+
+    linkView.addTools(
+      new joint.dia.ToolsView({
+        tools: [
+          //
+          verticesTool,
+          //segmentsTool,
+          //sourceArrowheadTool,
+          targetArrowheadTool,
+          // sourceAnchorTool,
+          // targetAnchorTool,
+          //boundaryTool,
+          removeButton
+        ]
+      })
+    );
+  };
+  componentWillMount() {}
+
   componentDidMount() {
-    var nodes = [
+    let nodes = [
       //
       { id: "1", title: "node 1" },
       { id: "2", title: "long nody node node node really really long node let's see what happens" },
@@ -182,7 +185,7 @@ class App extends React.Component {
       { id: "4", title: "node 4" },
       { id: "5", title: "node 5" }
     ];
-    var edges = [
+    let edges = [
       { from: "1", to: "3", weight: "33%" },
       { from: "2", to: "4", weight: "100%" },
       { from: "1", to: "4", weight: "33%" },
@@ -190,8 +193,8 @@ class App extends React.Component {
       { from: "4", to: "5", weight: "100%" }
     ];
 
-    var dag = this.buildGraph(nodes, edges);
-    console.log(dag);
+    let dag = this.buildDag(nodes, edges);
+
     this.layout(dag);
   }
 
