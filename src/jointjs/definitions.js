@@ -7,7 +7,41 @@ export const DagNode = joint.dia.Element.define(
       width: 150,
       height: 50
     },
-
+    inPorts: ["in"],
+    outPorts: ["out"],
+    ports: {
+      groups: {
+        out: {
+          position: {
+            name: "absolute",
+            args: {
+              x: "50%",
+              y: "100%"
+            }
+          },
+          attrs: {
+            ".port-body": {
+              stroke: "black",
+              fill: "red",
+              strokeWidth: 2,
+              height: 10,
+              width: 20,
+              refX: -10,
+              refY: -5,
+              opacity: 1,
+              magnet: true
+            }
+          },
+          markup: '<rect class="port-body"/>'
+        }
+      },
+      items: [
+        {
+          group: "out",
+          args: {} // overrides `args` from the group level definition.
+        }
+      ]
+    },
     attrs: {
       body: {
         refWidth: "100%",
@@ -18,6 +52,7 @@ export const DagNode = joint.dia.Element.define(
         rx: 10,
         ry: 10
       },
+
       label: {
         fontSize: 15,
         refX: "50%",
@@ -29,7 +64,8 @@ export const DagNode = joint.dia.Element.define(
           width: -25, // reference width minus 10
           height: "80%", // half of the reference height
           ellipsis: true // could also be a custom string, e.g. '...!?'
-        }
+        },
+        style: "-webkit-user-select: none;-moz-user-select: none;-ms-user-select: none;user-select: none;"
       }
     }
   },
@@ -48,6 +84,14 @@ export const DagNode = joint.dia.Element.define(
     setText: function(text) {
       return this.attr("label/textWrap/text", text || "");
     }
+    // hidePort: function(text) {
+    //   console.log("hide port");
+    //   return this.attr("ports/groups/out/attrs/opacity", 0);
+    // },
+    // showPort: function(text) {
+    //   console.log("show port");
+    //   return this.attr("ports/groups/out/attrs/opacity", 1);
+    // }
   }
 );
 

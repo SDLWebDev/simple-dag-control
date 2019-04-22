@@ -17,8 +17,8 @@ class App extends React.Component {
   }
 
   buildDag = (nodes, edges) => {
-    //var elements = nodes.map(n => new DagNode({ id: n.id }).setText(n.title));
-    var elements = nodes.map(n => new DagOutPort({ id: n.id }));
+    var elements = nodes.map(n => new DagNode({ id: n.id }).setText(n.title));
+    //var elements = nodes.map(n => new DagOutPort({ id: n.id }));
 
     var links = edges.map(e =>
       new joint.shapes.standard.Link({
@@ -48,7 +48,32 @@ class App extends React.Component {
       height: 600,
       gridSize: 10,
       model: new joint.dia.Graph(),
-      linkPinning: false
+      linkPinning: false,
+      markAvailable: true,
+      multiLinks: false,
+      snapLinks: true,
+      validateConnection: function(cellViewS, magnetS, cellViewT, magnetT, end, linkView) {
+        // Prevent linking from output ports to input ports within one element.
+        if (cellViewS === cellViewT) return false;
+        // Prevent linking to output ports.
+        if (magnetT && magnetT.getAttribute("port-group") === "out") return false;
+        // Only other elements should be nodes
+        else if (cellViewT.model.isElement()) return true;
+      },
+      defaultLink: function(elementView, magnet) {
+        return new joint.shapes.standard.Link({
+          connector: { name: "rounded" },
+          attrs: {
+            line: {
+              stroke: "black",
+              strokeWidth: LINK_STROKE_WIDTH
+            }
+          }
+        }).router("metro", {
+          startDirections: ["bottom"],
+          endDirections: ["top"]
+        });
+      }
     });
 
     joint.layout.DirectedGraph.layout(dag, {
@@ -103,6 +128,10 @@ class App extends React.Component {
     paper.on("link:mouseenter", function(linkView) {
       linkView.showTools();
     });
+
+    // paper.on("element:mouseenter", function(elementView) {
+    //   elementView.model.showPort();
+    // });
 
     paper.on("link:mouseleave", function(linkView) {});
 
