@@ -5,6 +5,7 @@ import "./styles.css";
 import joint from "jointjs/index";
 import g from "jointjs/index";
 import { DagNode, DagEdge } from "./jointjs/definitions";
+import graphlib from "graphlib";
 import _ from "lodash";
 
 const LINK_STROKE_WIDTH = 1;
@@ -108,8 +109,6 @@ class App extends React.Component {
 
       // has an obstacle been moved? Then reroute the link.
       if (allCells.indexOf(cell) > -1) {
-        console.log("updating...");
-
         allCells.forEach(link => {
           paper.findViewByModel(link).update();
         });
@@ -125,10 +124,26 @@ class App extends React.Component {
       console.log(cellView.model.id);
     });
 
+    paper.on("cell:contextmenu", function(cellView) {
+      var isElement = cellView.model.isElement();
+      if (isElement) {
+        console.log("context menu callback goes here");
+      }
+    });
+
     paper.on("link:mouseenter", function(linkView) {
       linkView.showTools();
     });
-
+    paper.on("link:connect", function(linkView) {
+      if (!graphlib.alg.isAcyclic(paper.model.toGraphLib())) {
+        linkView.model.remove();
+        // show some error message here
+        alert("cycles not allowed!");
+      } else {
+        // call server
+        console.log("adding connection on server...");
+      }
+    });
     // paper.on("element:mouseenter", function(elementView) {
     //   elementView.model.showPort();
     // });
