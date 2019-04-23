@@ -1,7 +1,7 @@
 {
-  "name": "jointjs-dag",
+  "name": "simple-dag-control",
   "version": "1.0.0",
-  "description": "",
+  "description": "A simple control made with React and JointJs for creating and manipulating directed acyclic graphs (DAGS)",
   "keywords": [],
   "main": "src/index.js",
   "dependencies": {
@@ -29,5 +29,7 @@
     "not dead",
     "not ie <= 11",
     "not op_mini all"
-  ]
+  ],
+  "author": "lx0n2acl",
+  "license": "MIT"
 }
